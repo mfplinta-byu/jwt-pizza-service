@@ -6,6 +6,11 @@ const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
 
 const orderRouter = express.Router();
 
+let fetch;
+(async () => {
+  fetch = (await import('node-fetch')).default;
+})();
+
 orderRouter.endpoints = [
   {
     method: 'GET',
