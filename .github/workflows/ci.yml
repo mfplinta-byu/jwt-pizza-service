@@ -60,6 +60,9 @@ jobs:
             },
           };" > src/config.js
 
+      - name: Add admin user
+        run: node src/init.js a a@jwt.org a
+
       - name: Tests
         run: npm test
 
