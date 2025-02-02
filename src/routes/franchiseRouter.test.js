@@ -19,7 +19,7 @@ let testFranchises = testFranchisesUser1.concat(testFranchisesUser2);
 
 beforeAll(async () => {
   // Login admin user
-  await new Promise(r => setTimeout(r, 200)); // Fix race condition on login
+  await new Promise(r => setTimeout(r, 1000)); // Fix race condition on login
   const loginAdminRes = await request(app).put('/api/auth').send(utils.adminUser);
   expect(loginAdminRes.status).toBe(200);
   adminUserAuthToken = loginAdminRes.body.token;
