@@ -21,10 +21,10 @@ beforeAll(async () => {
   // Login admin user
   const loginAdminRes = await request(app).put('/api/auth').send(utils.adminUser);
   adminUserAuthToken = loginAdminRes.body.token;
-  adminUserId = loginAdminRes.body.user.id;
+  expect(loginAdminRes.status).toBe(200);
   utils.expectValidJwt(adminUserAuthToken);
 
-  // Create franchise users
+  // Create utility users
   let franchiseUser1Res = await request(app).post('/api/auth').send(franchiseUser1);
   let franchiseUser2Res = await request(app).post('/api/auth').send(franchiseUser2);
   let dinerUserRes = await request(app).post('/api/auth').send(dinerUser);
@@ -44,8 +44,8 @@ beforeAll(async () => {
     .post('/api/franchise')
     .set('Authorization', 'Bearer ' + adminUserAuthToken)
     .send(franchise);
-    franchisesWithId.push({...franchise, id: createFranchiseRes.body.id})
     expect(createFranchiseRes.status).toBe(200);
+    franchisesWithId.push({...franchise, id: createFranchiseRes.body.id})
   }
 
   testFranchises = franchisesWithId;
@@ -65,8 +65,8 @@ test('get franchises success', async () => {
 
 test('get franchises from user success', async () => {
     let getFranchiseRes = await request(app)
-    .get(`/api/franchise/${franchiseUser1.id}`)
-    .set('Authorization', 'Bearer ' + adminUserAuthToken);
+      .get(`/api/franchise/${franchiseUser1.id}`)
+      .set('Authorization', 'Bearer ' + adminUserAuthToken);
 
     expect(getFranchiseRes.status).toBe(200);
     expectFranchisesToExist(testFranchisesUser1, getFranchiseRes.body);

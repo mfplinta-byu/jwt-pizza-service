@@ -5,7 +5,10 @@
 
   "customizations": {
     "vscode": {
-      "extensions": ["orta.vscode-jest"]
+      "extensions": [
+        "orta.vscode-jest",
+        "github.vscode-github-actions"
+      ]
     }
   }
 }
