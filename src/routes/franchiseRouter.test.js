@@ -19,9 +19,10 @@ let testFranchises = testFranchisesUser1.concat(testFranchisesUser2);
 
 beforeAll(async () => {
   // Login admin user
+  await new Promise(r => setTimeout(r, 200)); // Fix race condition on login
   const loginAdminRes = await request(app).put('/api/auth').send(utils.adminUser);
-  adminUserAuthToken = loginAdminRes.body.token;
   expect(loginAdminRes.status).toBe(200);
+  adminUserAuthToken = loginAdminRes.body.token;
   utils.expectValidJwt(adminUserAuthToken);
 
   // Create utility users
