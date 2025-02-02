@@ -2,10 +2,17 @@ const request = require('supertest');
 const app = require('../service');
 const utils = require('../utils/testUtils')
 
+let adminUserAuthToken;
 let testUserAuthToken;
 let testUser;
 
 beforeAll(async () => {
+  // Login admin user
+  const loginAdminRes = await request(app).put('/api/auth').send(utils.adminUser);
+  expect(loginAdminRes.status).toBe(200);
+  adminUserAuthToken = loginAdminRes.body.token;
+  utils.expectValidJwt(adminUserAuthToken);
+
   testUser = utils.createUser();
   const registerRes = await request(app).post('/api/auth').send(testUser);
   testUserAuthToken = registerRes.body.token;
@@ -43,13 +50,33 @@ test('login success', async () => {
   expect(loginRes.body.user).toMatchObject(expectedUser);
 });
 
+test('login unknown user', async () => {
+  const loginRes = await request(app).put('/api/auth').send(utils.createUser());
+  expect(loginRes.status).toBe(404);
+})
+
 test('login bad request', async () => {
   const loginRes = await request(app).post('/api/auth').send({});
   expect(loginRes.status).toBe(400);
 })
 
+test('update user success', async () => {
+  let newUser = utils.createUser();
+  const registerRes = await request(app).post('/api/auth').send(newUser);
+  expect(registerRes.status).toBe(200);
+  newUser = {...newUser, id: registerRes.body.user.id};
+
+  const updateUserRes = await request(app)
+    .put(`/api/auth/${newUser.id}`)
+    .set('Authorization', 'Bearer ' + adminUserAuthToken)
+    .send({email: newUser.email, password: 'test'});
+  expect(updateUserRes.status).toBe(200);
+})
+
 test('logout success', async () => {
-  const logoutRes = await request(app).delete('/api/auth').set('Authorization', 'Bearer ' + testUserAuthToken);
+  const logoutRes = await request(app)
+    .delete('/api/auth')
+    .set('Authorization', 'Bearer ' + testUserAuthToken);
   expect(logoutRes.status).toBe(200);
 });
 

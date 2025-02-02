@@ -18,8 +18,10 @@ let testFranchisesUser2 = [
 let testFranchises = testFranchisesUser1.concat(testFranchisesUser2);
 
 beforeAll(async () => {
+  // Fix race condition on login
+  jest.useFakeTimers({ advanceTimers: true });
+  jest.advanceTimersByTime(20000);
   // Login admin user
-  await new Promise(r => setTimeout(r, 1000)); // Fix race condition on login
   const loginAdminRes = await request(app).put('/api/auth').send(utils.adminUser);
   expect(loginAdminRes.status).toBe(200);
   adminUserAuthToken = loginAdminRes.body.token;
@@ -53,30 +55,44 @@ beforeAll(async () => {
 
 });
 
-test('get franchises success', async () => {
-    const getFranchiseRes = await request(app).get('/api/franchise');
+test('get franchises unauthenticated success', async () => {
+  const getFranchiseRes = await request(app).get('/api/franchise');
 
-    expect(getFranchiseRes.status).toBe(200);
+  expect(getFranchiseRes.status).toBe(200);
+  expectFranchisesToExist(testFranchises, getFranchiseRes.body);
+});
 
-    for(const franchise of testFranchises) {
-      // Franchise with name exists in response body
-      expect(getFranchiseRes.body.some(item => item.name === franchise.name)).toBe(true);
-    }
+test('get franchises as admin success', async () => {
+  const getFranchiseRes = await request(app)
+    .get('/api/franchise')
+    .set('Authorization', 'Bearer ' + adminUserAuthToken);
+
+  expect(getFranchiseRes.status).toBe(200);
+  expectFranchisesToExist(testFranchises, getFranchiseRes.body);
 });
 
 test('get franchises from user success', async () => {
-    let getFranchiseRes = await request(app)
-      .get(`/api/franchise/${franchiseUser1.id}`)
-      .set('Authorization', 'Bearer ' + adminUserAuthToken);
-
-    expect(getFranchiseRes.status).toBe(200);
-    expectFranchisesToExist(testFranchisesUser1, getFranchiseRes.body);
-
-    getFranchiseRes = await request(app)
-    .get(`/api/franchise/${franchiseUser2.id}`)
+  let getFranchiseRes = await request(app)
+    .get(`/api/franchise/${franchiseUser1.id}`)
     .set('Authorization', 'Bearer ' + adminUserAuthToken);
 
-    expectFranchisesToExist(testFranchisesUser2, getFranchiseRes.body);
+  expect(getFranchiseRes.status).toBe(200);
+  expectFranchisesToExist(testFranchisesUser1, getFranchiseRes.body);
+
+  getFranchiseRes = await request(app)
+  .get(`/api/franchise/${franchiseUser2.id}`)
+  .set('Authorization', 'Bearer ' + adminUserAuthToken);
+
+  expectFranchisesToExist(testFranchisesUser2, getFranchiseRes.body);
+});
+
+test('get franchises from user empty', async () => {
+  let getFranchiseRes = await request(app)
+    .get(`/api/franchise/${dinerUser.id}`)
+    .set('Authorization', 'Bearer ' + adminUserAuthToken);
+
+  expect(getFranchiseRes.status).toBe(200);
+  expect(getFranchiseRes.body).toMatchObject([]);
 });
 
 test('create franchise success', async () => {
@@ -88,6 +104,15 @@ test('create franchise success', async () => {
   expect(createFranchiseRes.status).toBe(200);
 });
 
+test('create franchise with unknown admin', async () => {
+  const createFranchiseRes = await request(app)
+    .post('/api/franchise')
+    .set('Authorization', 'Bearer ' + adminUserAuthToken)
+    .send({name: utils.randomText(5), admins: [{email: utils.randomText(10)}]});
+
+  expect(createFranchiseRes.status).toBe(404);
+});
+
 test('create franchise as non-admin user unauthorized', async () => {
   const createFranchiseRes = await request(app)
     .post('/api/franchise')
@@ -96,6 +121,8 @@ test('create franchise as non-admin user unauthorized', async () => {
 
   expect(createFranchiseRes.status).toBe(403);
 });
+
+
 
 test('delete franchise success', async () => {
   let newFranchise = {name: utils.randomText(5), admins: [{email: franchiseUser1.email}]};
@@ -178,6 +205,8 @@ afterAll(async () => {
     .delete(`/api/franchise/${franchise.id}`)
     .set('Authorization', 'Bearer ' + adminUserAuthToken)).status).toBe(200);
   }
+
+  jest.useRealTimers();
 });
 
 function expectFranchisesToExist(franchises, responseBody) {

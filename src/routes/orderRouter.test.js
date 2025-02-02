@@ -14,6 +14,9 @@ let testFranchise = {name: utils.randomText(5), admins: [{email: utils.adminUser
 let testStore;
 
 beforeAll(async () => {
+  // Fix race condition on login
+  jest.useFakeTimers({ advanceTimers: true });
+  jest.advanceTimersByTime(10000);
   // Login admin user
   const loginAdminRes = await request(app).put('/api/auth').send(utils.adminUser);
   expect(loginAdminRes.status).toBe(200);
@@ -124,5 +127,6 @@ test('get orders for user', async () => {
 });
 
 afterAll(async () => {
+  jest.useRealTimers();
   // No cleanup possible
-})
+});
