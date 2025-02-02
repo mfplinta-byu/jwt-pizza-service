@@ -122,8 +122,6 @@ test('create franchise as non-admin user unauthorized', async () => {
   expect(createFranchiseRes.status).toBe(403);
 });
 
-
-
 test('delete franchise success', async () => {
   let newFranchise = {name: utils.randomText(5), admins: [{email: franchiseUser1.email}]};
 

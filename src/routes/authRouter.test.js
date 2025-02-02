@@ -3,6 +3,7 @@ const app = require('../service');
 const utils = require('../utils/testUtils')
 
 let adminUserAuthToken;
+let adminUserId;
 let testUserAuthToken;
 let testUser;
 
@@ -11,6 +12,7 @@ beforeAll(async () => {
   const loginAdminRes = await request(app).put('/api/auth').send(utils.adminUser);
   expect(loginAdminRes.status).toBe(200);
   adminUserAuthToken = loginAdminRes.body.token;
+  adminUserId = loginAdminRes.body.user.id;
   utils.expectValidJwt(adminUserAuthToken);
 
   testUser = utils.createUser();
@@ -53,12 +55,12 @@ test('login success', async () => {
 test('login unknown user', async () => {
   const loginRes = await request(app).put('/api/auth').send(utils.createUser());
   expect(loginRes.status).toBe(404);
-})
+});
 
 test('login bad request', async () => {
   const loginRes = await request(app).post('/api/auth').send({});
   expect(loginRes.status).toBe(400);
-})
+});
 
 test('update user success', async () => {
   let newUser = utils.createUser();
@@ -71,7 +73,15 @@ test('update user success', async () => {
     .set('Authorization', 'Bearer ' + adminUserAuthToken)
     .send({email: newUser.email, password: 'test'});
   expect(updateUserRes.status).toBe(200);
-})
+});
+
+test('update user unauthorized', async () => {
+  const updateUserRes = await request(app)
+    .put(`/api/auth/${adminUserId}`)
+    .set('Authorization', 'Bearer ' + testUserAuthToken)
+    .send({email: utils.adminUser.email, password: 'test'});
+  expect(updateUserRes.status).toBe(403);
+});
 
 test('logout success', async () => {
   const logoutRes = await request(app)
