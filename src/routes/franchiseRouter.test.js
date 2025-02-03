@@ -1,13 +1,13 @@
 const request = require('supertest');
 const app = require('../service'); // Adjust the path to your app
-const { DB, Role } = require('../database/database.js'); // Adjust the path to your DB module
+const { Role } = require('../database/database.js'); // Adjust the path to your DB module
 const utils = require('../routes/util.js');
 let franchiseeUser;
 let franchiseeUserAuthToken;
 let franchiseId;
 let storeId;
 let newFranchise;
-let adminUserAuthToken;
+let adminUserAuthToken = null;
 
 beforeAll(async () => {
     franchiseeUser = {

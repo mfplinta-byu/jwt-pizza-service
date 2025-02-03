@@ -5,12 +5,12 @@ const utils = require('../routes/util.js');
 
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let userToUpdate = null;
-let userToUpdateAuthToken;
+// let userToUpdateAuthToken;
 let testUserAuthToken;
 
 
 beforeAll(async () => {
-  testUser.email = utils.randomText(10) + '@test.com';
+  testUser.email = utils.randomText(10) + '@tests.com';
   const registerRes = await request(app).post('/api/auth').send(testUser);
   testUserAuthToken = registerRes.body.token;
   utils.expectValidJwt(testUserAuthToken);

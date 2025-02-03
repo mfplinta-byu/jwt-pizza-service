@@ -41,11 +41,14 @@ async function getAdminAuthToken(){
     if (adminUserAuthToken) {
         return adminUserAuthToken;
     }
-    const adminLoginRes = await request(app)
-      .put('/api/auth')
-      .send({ email: 'admin@test.com', password: 'admin' }); // Use predefined admin credentials
-    adminUserAuthToken = adminLoginRes.body.token;
-    return adminUserAuthToken; 
+    const newAdminUser = await createAdminUser();
+    adminUserAuthToken = request(app).put('/api/auth').send(newAdminUser).then((res) => res.body.token);
+    return adminUserAuthToken;
+    // const adminLoginRes = await request(app)
+    //   .put('/api/auth')
+    //   .send({ email: 'admin@test.com', password: 'admin' }); // Use predefined admin credentials
+    // adminUserAuthToken = adminLoginRes.body.token;
+    // return adminUserAuthToken; 
 }
 
 async function createAdminUser() {

@@ -1,19 +1,19 @@
 const request = require('supertest');
 const app = require('../service');
-const DB = require('../database/database.js');
+// const DB = require('../database/database.js');
 const utils = require('../routes/util.js');
 
 test('Empty test', () => {
     expect(true).toBe(true);
 });
 
-const testUser = utils.createUser();
+// const testUser = utils.createUser();
 let testUserAuthToken;
-let adminUserAuthToken;
+// let adminUserAuthToken;
 let newMenuItem;
 
 beforeAll(async () => {
-    adminUserAuthToken = await utils.getAdminAuthToken();
+    // adminUserAuthToken = await utils.getAdminAuthToken();
     newMenuItem = { title: 'Student Pizza#' + utils.randomText(10), description: 'No topping, no sauce, just carbs', image: 'pizza9.png', price: 0.0001 };
     testUserAuthToken = await utils.newUsersAuthToken();
 });
