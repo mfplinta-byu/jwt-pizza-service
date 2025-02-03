@@ -1,26 +1,22 @@
 const request = require('supertest');
 const app = require('../service');
+const utils = require('../routes/util.js');
 
 
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
-const userToUpdate = { name: 'pizza diner to update', email: 'reg@test.com', password: 'a', roles: [{ role: 'admin' }] }; 
-let testUserAuthToken;
+let userToUpdate = null;
 let userToUpdateAuthToken;
+let testUserAuthToken;
 
-function randomName() {
-    return Math.random().toString(36).substring(2, 12);
-}
 
 beforeAll(async () => {
-  testUser.email = randomName() + '@test.com';
-//   testUser.email = Math.random().toString(36).substring(2, 12) + '@test.com';
+  testUser.email = utils.randomText(10) + '@test.com';
   const registerRes = await request(app).post('/api/auth').send(testUser);
   testUserAuthToken = registerRes.body.token;
-  expectValidJwt(testUserAuthToken);
+  utils.expectValidJwt(testUserAuthToken);
 
-  // const registerRes2 = await request(app).post('/api/auth').send(userToUpdate);
-  // userToUpdateAuthToken = registerRes2.body.token;
-  // expectValidJwt(userToUpdateAuthToken);
+  //Register the user to update
+  userToUpdate = await utils.createAdminUser()
 });
 
 // **Consern, app allows multiple registrations of the same email?
@@ -38,7 +34,7 @@ test('login existing user', async () => {
   const loginRes = await request(app).put('/api/auth').send(testUser);
   
   expect(loginRes.status).toBe(200);
-  expectValidJwt(loginRes.body.token);
+  utils.expectValidJwt(loginRes.body.token);
   
   const expectedUser = { ...testUser, roles: [{ role: 'diner' }] };
   delete expectedUser.password;
@@ -66,11 +62,11 @@ test('logout user', async () => {
 
 });
 test('register new user', async () => {
-  const newUser = { name: 'pizza diner tester', email: randomName() + '@test.com', password: 'a' };
+  const newUser = { name: 'pizza diner tester', email: utils.randomText() + '@test.com', password: 'a' };
   const registerRes = await request(app).post('/api/auth').send(newUser);
   
   expect(registerRes.status).toBe(200);
-  expectValidJwt(registerRes.body.token);
+  utils.expectValidJwt(registerRes.body.token);
   
   const expectedUser = { ...newUser, roles: [{ role: 'diner' }] };
   delete expectedUser.password;
@@ -78,26 +74,28 @@ test('register new user', async () => {
 });
 
 // test('update user', async () => {
-//   const loginRes = await request(app).put('/api/auth').send(userToUpdate);
-//   expect(loginRes.status).toBe(200);
-//   expectValidJwt(loginRes.body.token);
+//     const userDebug = userToUpdate
+//     // expect(userToUpdate)
+//     const loginRes = await request(app).put('/api/auth').send(userToUpdate);
+//     expect(loginRes.status).toBe(200);
+//     utils.expectValidJwt(loginRes.body.token);
 
-//   console.log('Logged in user:', loginRes.body.user);
-//   console.log('Auth token:', loginRes.body.token);
+//     console.log('Logged in user:', loginRes.body.user);
+//     console.log('Auth token:', loginRes.body.token);
 
-//   const updatedUser = { email: 'newemail@test.com'};
-//   //   const updatedUser = { email: 'newemail@test.com', password: 'newpassword' };
+//     //   const updatedUser = { email: 'newemail@test.com'};
+//     const updatedUser = { email: 'newemail@test.com', password: 'newpassword' };
 
-//   const updateRes = await request(app)
+//     const updateRes = await request(app)
 //     .put(`/api/auth/${userToUpdate.id}`)
-//     .set('Authorization', `Bearer ${userToUpdateAuthToken}`)
+//     .set('Authorization', `Bearer ${utils.getAdminAuthToken()}`)
 //     .send(updatedUser);
 
-//   console.log('Update response:', updateRes.body);
-//   console.log('Update status:', updateRes.status);
+//     console.log('Update response:', updateRes.body);
+//     console.log('Update status:', updateRes.status);
 
-//   expect(updateRes.status).toBe(200);
-//   expect(updateRes.body.email).toBe(updatedUser.email);
+//     expect(updateRes.status).toBe(200);
+//     expect(updateRes.body.email).toBe(updatedUser.email);
 // });
 
 test('non-admin user cannot update another user', async () => {
@@ -113,6 +111,3 @@ test('non-admin user cannot update another user', async () => {
   expect(updateRes.status).toBe(401); // Expect a 403 Forbidden status
   expect(updateRes.body.message).toBe('unauthorized'); // Expect an appropriate error message
 });
-function expectValidJwt(potentialJwt) {
-  expect(potentialJwt).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
-}

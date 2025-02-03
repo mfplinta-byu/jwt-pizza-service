@@ -2,21 +2,14 @@ const request = require('supertest');
 const app = require('../service'); // Adjust the path to your app
 const { DB, Role } = require('../database/database.js'); // Adjust the path to your DB module
 const utils = require('../routes/util.js');
-let adminUser;
-let adminUserAuthToken;
 let franchiseeUser;
 let franchiseeUserAuthToken;
 let franchiseId;
 let storeId;
 let newFranchise;
+let adminUserAuthToken;
 
 beforeAll(async () => {
-    adminUser = {
-        name: 'Admin User',
-        email: 'admin@test.com',
-        password: 'admin',
-        roles: [{ role: Role.Admin }],
-    };
     franchiseeUser = {
         name: 'Franchisee User',
         email: 'franchisee@test.com',
@@ -27,13 +20,8 @@ beforeAll(async () => {
         name: 'Pizza Palace # ' + utils.randomText(5),
         admins: [{ email: franchiseeUser.email }],
     };
-    // Log in as the admin user
-    const adminLoginRes = await request(app)
-      .put('/api/auth')
-      .send({ email: 'admin@test.com', password: 'admin' }); // Use predefined admin credentials
-    adminUserAuthToken = adminLoginRes.body.token;
-    
-    // console.log(adminLoginRes.body);
+
+    adminUserAuthToken = await utils.getAdminAuthToken();
   
     // Log in as the franchisee user
     const franchiseeLoginRes = await request(app)
