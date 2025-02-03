@@ -24,6 +24,11 @@ beforeAll(async () => {
     adminUserAuthToken = await utils.getAdminAuthToken();
     utils.expectValidJwt(adminUserAuthToken);
   
+    // Register the franchisee user
+    const registerRes = await request(app).post('/api/auth').send(franchiseeUser);
+    expect(registerRes.status).toBe(200);
+    expect(registerRes.body.user.email).toBe(franchiseeUser.email);
+    
     // Log in as the franchisee user
     const franchiseeLoginRes = await request(app)
       .put('/api/auth')
