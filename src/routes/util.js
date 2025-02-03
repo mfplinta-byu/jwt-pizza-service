@@ -16,9 +16,9 @@ function createUser() {
 }
 
 function newUsersAuthToken() {
-    if (newUserAuthToken) {
-        return newUserAuthToken;
-    }
+    // if (newUserAuthToken) {
+    //     return newUserAuthToken;
+    // }
     newUserAuthToken = request(app).post('/api/auth').send(createUser()).then((res) => res.body.token);
     return newUserAuthToken;
 }
@@ -38,9 +38,9 @@ function randomText(length) {
 // }
 
 async function getAdminAuthToken(){
-    if (adminUserAuthToken) {
-        return adminUserAuthToken;
-    }
+    // if (adminUserAuthToken) {
+    //     return adminUserAuthToken;
+    // }
     const newAdminUser = await createAdminUser();
     adminUserAuthToken = request(app).put('/api/auth').send(newAdminUser).then((res) => res.body.token);
     return adminUserAuthToken;

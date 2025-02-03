@@ -19,16 +19,6 @@ beforeAll(async () => {
   userToUpdate = await utils.createAdminUser()
 });
 
-// **Consern, app allows multiple registrations of the same email?
-// test('Negative register', async () => {
-//     const registerRes = await request(app).post('/api/auth').send(testUser);
-//     expect(registerRes.status).toBe(200);
-//     // expect(registerRes.body.message).toBeUndefined();
-//     const registerRes2 = await request(app).post('/api/auth').send(testUser);
-//     expect(registerRes2.status).toBe(400);
-    
-// });
-
 describe('Login and logout', () => {
 test('login existing user', async () => {
   const loginRes = await request(app).put('/api/auth').send(testUser);
@@ -71,6 +61,20 @@ test('register new user', async () => {
   const expectedUser = { ...newUser, roles: [{ role: 'diner' }] };
   delete expectedUser.password;
   expect(registerRes.body.user).toMatchObject(expectedUser);
+});
+
+
+test('update user success', async () => {
+  let newUser = utils.createUser();
+  const registerRes = await request(app).post('/api/auth').send(newUser);
+  expect(registerRes.status).toBe(200);
+  newUser = {...newUser, id: registerRes.body.user.id};
+  adminUserAuthToken = await utils.getAdminAuthToken();
+  const updateUserRes = await request(app)
+    .put(`/api/auth/${newUser.id}`)
+    .set('Authorization', 'Bearer ' + adminUserAuthToken)
+    .send({email: newUser.email, password: 'test'});
+  expect(updateUserRes.status).toBe(200);
 });
 
 // test('update user', async () => {
