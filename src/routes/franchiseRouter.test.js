@@ -22,6 +22,7 @@ beforeAll(async () => {
     };
 
     adminUserAuthToken = await utils.getAdminAuthToken();
+    utils.expectValidJwt(adminUserAuthToken);
   
     // Log in as the franchisee user
     const franchiseeLoginRes = await request(app)
