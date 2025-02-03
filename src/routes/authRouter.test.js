@@ -33,6 +33,7 @@ beforeAll(async () => {
     
 // });
 
+describe('Login and logout', () => {
 test('login existing user', async () => {
   const loginRes = await request(app).put('/api/auth').send(testUser);
   
@@ -63,6 +64,7 @@ test('logout user', async () => {
   expect(protectedRes.status).toBe(401);
 });
 
+});
 test('register new user', async () => {
   const newUser = { name: 'pizza diner tester', email: randomName() + '@test.com', password: 'a' };
   const registerRes = await request(app).post('/api/auth').send(newUser);

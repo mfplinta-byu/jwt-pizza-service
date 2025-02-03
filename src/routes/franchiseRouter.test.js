@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../service'); // Adjust the path to your app
 const { DB, Role } = require('../database/database.js'); // Adjust the path to your DB module
-
+const utils = require('../routes/util.js');
 let adminUser;
 let adminUserAuthToken;
 let franchiseeUser;
@@ -24,7 +24,7 @@ beforeAll(async () => {
         roles: [{ role: Role.Franchisee }],
     };
     newFranchise = {
-        name: 'Pizza Palace',
+        name: 'Pizza Palace # ' + utils.randomText(5),
         admins: [{ email: franchiseeUser.email }],
     };
     // Log in as the admin user
@@ -42,6 +42,7 @@ beforeAll(async () => {
     franchiseeUserAuthToken = franchiseeLoginRes.body.token;
 });
 
+describe('Franchises', () => {
 // GET /api/franchise
 test('get all franchises', async () => {
   const res = await request(app).get('/api/franchise');
@@ -59,18 +60,18 @@ test('get franchises for a user', async () => {
   expect(Array.isArray(res.body)).toBe(true);
 });
 
-async function createFranchise() {
+async function createFranchise(franchise) {
     let res = await request(app)
         .post('/api/franchise')
         .set('Authorization', `Bearer ${adminUserAuthToken}`)
-        .send(newFranchise);
+        .send(franchise);
 
     return res
 }
 // POST /api/franchise
 test('admin creates a new franchise', async () => {
-  let res = await createFranchise();
-//   console.log(res.body);
+  let res = await createFranchise(newFranchise);
+  console.log(res.body);
   expect(res.status).toBe(200);
   expect(res.body.name).toBe(newFranchise.name);
   franchiseId = res.body.id; // Save the franchise ID for later tests, might need to be a beforeAll
@@ -110,6 +111,7 @@ test('non-admin cannot delete a franchise', async () => {
   expect(res.body.message).toBe('unable to delete a franchise');
 });
 
+});
 //NOT WORKING FIGURE OUT LATER
 // POST /api/franchise/:franchiseId/store
 // test('admin creates a new store', async () => {
@@ -126,6 +128,7 @@ test('non-admin cannot delete a franchise', async () => {
 //     storeId = res.body.id; // Save the store ID for later tests
 // });
 
+describe('Stores', () => {
 test('unauthorized user cannot create a store', async () => {
   const newStore = { name: 'Downtown Store' };
 
@@ -155,4 +158,6 @@ test('unauthorized user cannot delete a store', async () => {
 
   expect(res.status).toBe(403);
   expect(res.body.message).toBe('unable to delete a store');
+});
+
 });
