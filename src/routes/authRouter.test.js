@@ -69,7 +69,7 @@ test('update user success', async () => {
   const registerRes = await request(app).post('/api/auth').send(newUser);
   expect(registerRes.status).toBe(200);
   newUser = {...newUser, id: registerRes.body.user.id};
-  adminUserAuthToken = await utils.getAdminAuthToken();
+  const adminUserAuthToken = await utils.getAdminAuthToken();
   const updateUserRes = await request(app)
     .put(`/api/auth/${newUser.id}`)
     .set('Authorization', 'Bearer ' + adminUserAuthToken)
