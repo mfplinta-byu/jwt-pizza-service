@@ -7,5 +7,7 @@
         "statements": 80
       }
     },
-    "setupFilesAfterEnv": ["./jest.setup.js"]
+    "setupFilesAfterEnv": ["./jest.setup.js"],
+    "testEnvironment": "node",
+    "testMatch": ["**/?(*.)+(test).[jt]s?(x)"]
   }

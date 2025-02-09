@@ -63,19 +63,19 @@ test('get orders', async () => {
 });
 
 // Node Fetch doesn't work, wait until opencore legacy patcher
-// test('create order', async () => {
-//     const res = await request(app)
-//         .post('/api/order')
-//         .send({ franchiseId: 1, storeId: 1, items: [{ menuId: 1, description: 'Veggie', price: 0.05 }] })
-//         .set('Authorization', `Bearer ${testUserAuthToken}`);
-//     expect(res.status).toBe(200);
-//     expect(res.body.order.franchiseId).toBe(1);
-//     expect(res.body.order.storeId).toBe(1);
-//     expect(Array.isArray(res.body.order.items)).toBe(true);
-//     expect(res.body.order.items[0].menuId).toBe(1);
-//     expect(res.body.order.items[0].description).toBe('Veggie');
-//     expect(res.body.order.items[0].price).toBe(0.05);
-// });
+test('create order', async () => {
+    const res = await request(app)
+        .post('/api/order')
+        .send({ franchiseId: 1, storeId: 1, items: [{ menuId: 1, description: 'Veggie', price: 0.05 }] })
+        .set('Authorization', `Bearer ${testUserAuthToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.order.franchiseId).toBe(1);
+    expect(res.body.order.storeId).toBe(1);
+    expect(Array.isArray(res.body.order.items)).toBe(true);
+    expect(res.body.order.items[0].menuId).toBe(1);
+    expect(res.body.order.items[0].description).toBe('Veggie');
+    expect(res.body.order.items[0].price).toBe(0.05);
+});
 
 test('cant create order without auth', async () => {
     const res = await request(app)
