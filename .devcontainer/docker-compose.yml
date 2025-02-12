@@ -10,8 +10,12 @@ services:
       - /bin/bash
       - -c
       - |
+        cd $$(ls -d /workspaces/*/|head -n 1)
+        echo Running npm install...
+        npm i
         echo Adding pizza admin user...
-        node $$(ls -d /workspaces/*/|head -n 1)/src/init.js $$ADMIN_NAME $$ADMIN_EMAIL $$ADMIN_PASSWORD
+        cd src
+        node init.js $$ADMIN_NAME $$ADMIN_EMAIL $$ADMIN_PASSWORD
         echo Sleeping indefinitively...
         sleep infinity
     depends_on:
