@@ -7,6 +7,7 @@ let franchiseeUserAuthToken;
 let franchiseId;
 let storeId;
 let newFranchise;
+let slcFranchise;
 let adminUserAuthToken = null;
 
 beforeAll(async () => {
@@ -20,6 +21,12 @@ beforeAll(async () => {
         name: 'Pizza Palace # ' + utils.randomText(5),
         admins: [{ email: franchiseeUser.email }],
     };
+
+    slcFranchise = {
+        name: 'SLC Franchise',
+        admins: [{ email: franchiseeUser.email }],
+    }
+
 
     adminUserAuthToken = await utils.getAdminAuthToken();
     utils.expectValidJwt(adminUserAuthToken);
@@ -69,6 +76,14 @@ test('admin creates a new franchise', async () => {
   expect(res.status).toBe(200);
   expect(res.body.name).toBe(newFranchise.name);
   franchiseId = res.body.id; // Save the franchise ID for later tests, might need to be a beforeAll
+
+  const remakeSLC = false;
+  if (remakeSLC) {
+    res = await createFranchise(slcFranchise);
+    console.log(res.body);
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe(slcFranchise.name);
+  }
 });
 
 test('non-admin cannot create a franchise', async () => {
@@ -88,6 +103,10 @@ test('non-admin cannot create a franchise', async () => {
 
 // DELETE /api/franchise/:franchiseId
 test('admin deletes a franchise', async () => {
+  const hold_delete = false;
+  if (hold_delete){
+    return;
+  }
   let res = await request(app)
     .delete(`/api/franchise/${franchiseId}`)
     .set('Authorization', `Bearer ${adminUserAuthToken}`);
