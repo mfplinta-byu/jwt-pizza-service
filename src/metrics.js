@@ -84,11 +84,11 @@ function sendMetricsPeriodically(period) {
         console.log('Sending metrics...')
         try {
             const buf = new MetricBuilder();
-            httpMetrics(buf);
+            // httpMetrics(buf);
             systemMetrics(buf);
-            userMetrics(buf);
-            purchaseMetrics(buf);
-            authMetrics(buf);
+            // userMetrics(buf);
+            // purchaseMetrics(buf);
+            // authMetrics(buf);
 
             const metrics = buf.toString();
             await sendMetricToGrafana(metrics);
@@ -98,9 +98,9 @@ function sendMetricsPeriodically(period) {
     }, period);
 }
 
-function httpMetrics(builder) {
+// function httpMetrics(builder) {
 
-}
+// }
 
 function systemMetrics(builder) {
     const cpuUsage = getCpuUsagePercentage();
@@ -109,16 +109,16 @@ function systemMetrics(builder) {
     builder.append('memory_usage', memoryUsage, 'gauge', '%');
 }
 
-function userMetrics(builder) {
+// function userMetrics(builder) {
 
-}
+// }
 
-function purchaseMetrics(builder) {
+// function purchaseMetrics(builder) {
 
-}
+// }
 
-function authMetrics(metrics) {
+// function authMetrics(metrics) {
 
-}
+// }
 
 module.exports = { sendMetricsPeriodically }
