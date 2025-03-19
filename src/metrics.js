@@ -1,30 +1,87 @@
 const config = require('./config').metrics;
 const os = require('os');
 
+const unprocessedDefault = {
+    http_latencies: [],
+    http_req_num: {
+        get: 0,
+        put: 0,
+        post: 0,
+        delete: 0
+    }
+}
+
+let unprocessedData = unprocessedDefault;
+
+const requestTracker = (req, res, next) => {
+    const start = Date.now();
+
+    const handler = () => {
+        const end = Date.now();
+        const duration = end - start;
+
+        if (['GET', 'POST', 'PUT', 'DELETE'].includes(req.method)) {
+            unprocessedData.http_latencies.push(duration);
+            switch(req.method) {
+                case 'GET':
+                    unprocessedData.http_req_num.get += 1;
+                    break;
+                case 'POST':
+                    unprocessedData.http_req_num.post += 1;
+                    break;
+                case 'PUT':
+                    unprocessedData.http_req_num.put += 1;
+                    break;
+                case 'DELETE':
+                    unprocessedData.http_req_num.delete += 1;
+                    break;
+            }
+        }
+    };
+
+    res.on('finish', handler);
+    res.on('close', handler);
+    next();
+};
+
+
+
 class MetricBuilder {
     constructor() {
         this.metrics = []
     }
 
     append(metricName, metricValue, type, unit) {
+        return this.appendFromList(metricName, [metricValue], type, unit);
+    }
+
+    appendFromList(metricName, metricList, type, unit) {
+        const dataPoints = [];
+        for(const value in metricList) {
+            dataPoints.push({
+                asDouble: parseInt(value),
+                timeUnixNano: Date.now() * 1000000,
+                attributes: [
+                    {
+                        key: "source",
+                        value: { "stringValue": config.source }
+                    }
+                ]
+            });
+        }
+        console.log(`Sending ${metricList} for ${metricName}`)
+        if(dataPoints.length == 0) {
+            return;
+        }
         this.metrics.push({
             name: metricName,
             unit: unit,
             [type]: {
-                dataPoints: [
-                    {
-                        asDouble: metricValue,
-                        timeUnixNano: Date.now() * 1000000,
-                        attributes: [
-                            {
-                                key: "source",
-                                value: { "stringValue": config.source }
-                            }
-                        ]
-                    },
-                ],
-                // aggregationTemporality: "AGGREGATION_TEMPORALITY_CUMULATIVE",
-                // isMonotonic: true
+                dataPoints: dataPoints,
+                ...(type == 'sum' && {
+                    aggregationTemporality: "AGGREGATION_TEMPORALITY_CUMULATIVE",
+                    isMonotonic: true
+                })
             },
         })
     }
@@ -68,7 +125,8 @@ async function sendMetricToGrafana(body) {
         .then((response) => {
             if (!response.ok) {
                 response.text().then((text) => {
-                    console.error(`Failed to push metrics data to Grafana: ${text}\n${body}`);
+                    console.error(`Failed to push metrics data to Grafana: ${text}`);
+                    console.error(body);
                 });
             } else {
                 console.log(`Pushed metrics`);
@@ -84,7 +142,7 @@ function sendMetricsPeriodically(period) {
         console.log('Sending metrics...')
         try {
             const buf = new MetricBuilder();
-            // httpMetrics(buf);
+            httpMetrics(buf);
             systemMetrics(buf);
             // userMetrics(buf);
             // purchaseMetrics(buf);
@@ -98,9 +156,23 @@ function sendMetricsPeriodically(period) {
     }, period);
 }
 
-// function httpMetrics(builder) {
+function httpMetrics(builder) {
+    // if(unprocessedData.http_latencies.length == 0) {
+    //     return;
+    // }
 
-// }
+    builder.appendFromList('latency', unprocessedData.http_latencies, 'sum', 'ms');
+    builder.append('get_requests', unprocessedData.http_req_num.get, 'sum', '1');
+    builder.append('put_requests', unprocessedData.http_req_num.put, 'sum', '1');
+    builder.append('post_requests', unprocessedData.http_req_num.post, 'sum', '1');
+    builder.append('delete_requests', unprocessedData.http_req_num.delete, 'sum', '1');
+
+    unprocessedData.http_latencies = [];
+    unprocessedData.http_req_num.get = 0;
+    unprocessedData.http_req_num.put = 0;
+    unprocessedData.http_req_num.post = 0;
+    unprocessedData.http_req_num.delete = 0;
+}
 
 function systemMetrics(builder) {
     const cpuUsage = getCpuUsagePercentage();
@@ -121,4 +193,4 @@ function systemMetrics(builder) {
 
 // }
 
-module.exports = { sendMetricsPeriodically }
+module.exports = { sendMetricsPeriodically, requestTracker }
