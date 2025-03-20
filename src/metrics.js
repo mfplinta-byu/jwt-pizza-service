@@ -12,7 +12,9 @@ const unprocessedDefault = { // The data structure to hold the logs
     revenue: 0,
     pizza_purchases: 0,
     pizza_purchase_failures: 0,
-    pizza_latencies: []
+    pizza_latencies: [],
+    auth_success: 0,
+    auth_failure: 0
 }
 
 let unprocessedData = unprocessedDefault;
@@ -22,30 +24,16 @@ const requestTracker = (req, res, next) => { // The middle ware for the requests
     const handler = () => {
         const end = Date.now();
         const duration = end - start;
- 
+
         if (['GET', 'POST', 'PUT', 'DELETE'].includes(req.method)) {
             unprocessedData.http_latencies.push(duration);
-            switch(req.method) {
+
+            switch (req.method) {
                 case 'GET':
                     unprocessedData.http_req_num.get += 1;
-                    
                     break;
                 case 'POST':
                     unprocessedData.http_req_num.post += 1;
-
-                    // Handle purchase metrics
-                    if (req.originalUrl == '/api/order'){
-                        unprocessedData.pizza_latencies.push(duration);
-                        if (res.statusCode != 200){
-                            unprocessedData.pizza_purchase_failures += 1; 
-                            break;
-                        }
-                        unprocessedData.pizza_purchases += 1;
-                        for(const item of req.body.items) {
-                            unprocessedData.revenue += item.price;
-                        }
-                    }
-
                     break;
                 case 'PUT':
                     unprocessedData.http_req_num.put += 1;
@@ -53,6 +41,28 @@ const requestTracker = (req, res, next) => { // The middle ware for the requests
                 case 'DELETE':
                     unprocessedData.http_req_num.delete += 1;
                     break;
+            }
+
+            // Handle purchase metrics
+            if (req.originalUrl == '/api/order' && req.method == 'POST') {
+                unprocessedData.pizza_latencies.push(duration);
+                if (res.statusCode != 200) {
+                    unprocessedData.pizza_purchase_failures += 1;
+                    return;
+                }
+                unprocessedData.pizza_purchases += 1;
+                for (const item of req.body.items) {
+                    unprocessedData.revenue += item.price;
+                }
+            }
+
+            // Handle authentication metrics
+            else if(req.originalUrl == '/api/auth' && ['POST', 'PUT'].includes(req.method)) {
+                if(res.statusCode != 200) {
+                    unprocessedData.auth_failure += 1;
+                    return;
+                }
+                unprocessedData.auth_success += 1;
             }
         }
     };
@@ -75,7 +85,7 @@ class MetricBuilder {
 
     appendFromList(metricName, metricList, type, unit) {
         const dataPoints = [];
-        for(const value of metricList) {
+        for (const value of metricList) {
             dataPoints.push({
                 asDouble: value,
                 timeUnixNano: Date.now() * 1000000,
@@ -87,7 +97,7 @@ class MetricBuilder {
                 ]
             });
         }
-        if(dataPoints.length == 0) {
+        if (dataPoints.length == 0) {
             return;
         }
         this.metrics.push({
@@ -135,7 +145,6 @@ function getMemoryUsagePercentage() {
 
 async function sendMetricToGrafana(body) { // the function that send over the information in bulk
     await fetch(config.url, {
-    // await fetch(`https://webhook.site/633a559f-ce09-4c8d-8bf3-b0fa232d336d`, {
         method: 'POST',
         body: body,
         headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
@@ -154,12 +163,12 @@ async function sendMetricToGrafana(body) { // the function that send over the in
             console.error('Error pushing metrics:', error);
         });
 }
-function zeroOut(){
+function zeroOut() {
     // Zeroing out the unprocessed data structure
     unprocessedData.http_latencies = [];
     unprocessedData.pizza_purchases = 0;
     unprocessedData.http_latencies = []
-    unprocessedData.http_req_num.get = unprocessedData.http_req_num.put = unprocessedData.http_req_num.post = unprocessedData.http_req_num.delete = unprocessedData.pizza_purchase_failures = unprocessedData.revenue = 0;
+    unprocessedData.http_req_num.get = unprocessedData.http_req_num.put = unprocessedData.http_req_num.post = unprocessedData.http_req_num.delete = unprocessedData.pizza_purchase_failures = unprocessedData.revenue = unprocessedData.auth_success = unprocessedData.auth_failure = 0;
 }
 function sendMetricsPeriodically(period) { // Sets the timer in which the metrics are sent
     return setInterval(async () => {
@@ -170,7 +179,7 @@ function sendMetricsPeriodically(period) { // Sets the timer in which the metric
             systemMetrics(buf);
             // userMetrics(buf);
             purchaseMetrics(buf);
-            // authMetrics(buf);
+            authMetrics(buf);
             zeroOut();
 
             const metrics = buf.toString();
@@ -188,14 +197,16 @@ function httpMetrics(builder) {
     builder.append('post_requests', unprocessedData.http_req_num.post, 'sum', '1');
     builder.append('delete_requests', unprocessedData.http_req_num.delete, 'sum', '1');
 }
+
 function systemMetrics(builder) { // Sending the cpu and memory values
     const cpuUsage = getCpuUsagePercentage();
     const memoryUsage = getMemoryUsagePercentage();
     builder.append('cpu_usage', cpuUsage, 'gauge', '%');
     builder.append('memory_usage', memoryUsage, 'gauge', '%');
 }
-// function userMetrics(builder) {
 
+// function userMetrics(builder) {
+    
 // }
 
 function purchaseMetrics(builder) { // Pizza latency, pizza errors and pizza purchases
@@ -205,8 +216,9 @@ function purchaseMetrics(builder) { // Pizza latency, pizza errors and pizza pur
     builder.append('revenue', unprocessedData.revenue, 'sum', '1');
 }
 
-// function authMetrics(metrics) {
-
-// }
+function authMetrics(builder) {
+    builder.append('auth_success', unprocessedData.auth_success, 'sum', '1');
+    builder.append('auth_failure', unprocessedData.auth_failure, 'sum', '1');
+}
 
 module.exports = { sendMetricsPeriodically, requestTracker }
