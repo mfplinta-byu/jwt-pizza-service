@@ -1,6 +1,5 @@
 const config = require('./config').metrics;
 const os = require('os');
-const util = require('util');
 
 const unprocessedData = { // The data structure to hold the logs
     http_latencies: [],
