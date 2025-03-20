@@ -53,7 +53,7 @@ const requestTracker = (req, res, next) => { // The middle ware for the requests
             }
 
             // Handle purchase metrics
-            if (req.originalUrl == '/api/order' && req.method == 'POST') {
+            else if (req.originalUrl == '/api/order' && req.method == 'POST') {
                 unprocessedData.pizza_latencies.push(duration);
                 if (res.statusCode != 200) {
                     unprocessedData.pizza_purchase_failures += 1;
