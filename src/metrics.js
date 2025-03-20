@@ -1,7 +1,8 @@
 const config = require('./config').metrics;
 const os = require('os');
+const util = require('util');
 
-const unprocessedDefault = { // The data structure to hold the logs
+const unprocessedData = { // The data structure to hold the logs
     http_latencies: [],
     http_req_num: {
         get: 0,
@@ -14,10 +15,9 @@ const unprocessedDefault = { // The data structure to hold the logs
     pizza_purchase_failures: 0,
     pizza_latencies: [],
     auth_success: 0,
-    auth_failure: 0
+    auth_failure: 0,
+    active_users: new Map()
 }
-
-let unprocessedData = unprocessedDefault;
 
 const requestTracker = (req, res, next) => { // The middle ware for the requests to go and log them
     const start = Date.now();
@@ -45,6 +45,14 @@ const requestTracker = (req, res, next) => { // The middle ware for the requests
                     return;
             }
 
+            if(req.originalUrl == '/api/auth' && req.method == 'DELETE') {
+                // Remove from active if logged out
+                if(req.statusCode != 200 && req.user != null) {
+                    unprocessedData.active_users.delete(req.user.email);
+                    return;
+                }
+            }
+
             // Handle purchase metrics
             if (req.originalUrl == '/api/order' && req.method == 'POST') {
                 unprocessedData.pizza_latencies.push(duration);
@@ -65,6 +73,8 @@ const requestTracker = (req, res, next) => { // The middle ware for the requests
                     return;
                 }
                 unprocessedData.auth_success += 1;
+                // Add to active users
+                unprocessedData.active_users.set(req.body.email, Date.now() * 1000000);
             }
         }
     };
@@ -171,6 +181,7 @@ function zeroOut() {
     unprocessedData.pizza_purchases = 0;
     unprocessedData.http_latencies = []
     unprocessedData.http_req_num.get = unprocessedData.http_req_num.put = unprocessedData.http_req_num.post = unprocessedData.http_req_num.delete = unprocessedData.pizza_purchase_failures = unprocessedData.revenue = unprocessedData.auth_success = unprocessedData.auth_failure = 0;
+    // Should not clear unprocessedData.active_users
 }
 function sendMetricsPeriodically(period) { // Sets the timer in which the metrics are sent
     return setInterval(async () => {
@@ -179,7 +190,7 @@ function sendMetricsPeriodically(period) { // Sets the timer in which the metric
             const buf = new MetricBuilder();
             httpMetrics(buf);
             systemMetrics(buf);
-            // userMetrics(buf);
+            userMetrics(buf);
             purchaseMetrics(buf);
             authMetrics(buf);
             zeroOut();
@@ -207,9 +218,9 @@ function systemMetrics(builder) { // Sending the cpu and memory values
     builder.append('memory_usage', memoryUsage, 'gauge', '%');
 }
 
-// function userMetrics(builder) {
-    
-// }
+function userMetrics(builder) {
+    builder.append('active_users', unprocessedData.active_users.size, 'sum', '1');
+}
 
 function purchaseMetrics(builder) { // Pizza latency, pizza errors and pizza purchases
     builder.appendFromList('pizza_latency', unprocessedData.pizza_latencies, 'sum', 'ms');
