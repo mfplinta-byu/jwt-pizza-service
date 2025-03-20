@@ -42,7 +42,7 @@ const requestTracker = (req, res, next) => { // The middle ware for the requests
                         }
                         unprocessedData.pizza_purchases += 1;
                         for(const item of req.body.items) {
-                            revenue += item.price;
+                            unprocessedData.revenue += item.price;
                         }
                     }
 
@@ -202,6 +202,7 @@ function purchaseMetrics(builder) { // Pizza latency, pizza errors and pizza pur
     builder.appendFromList('pizza_latency', unprocessedData.pizza_latencies, 'sum', 'ms');
     builder.append('pizza_purchases', unprocessedData.pizza_purchases, 'sum', '1');
     builder.append('pizza_errors', unprocessedData.pizza_purchase_failures, 'sum', '1');
+    builder.append('revenue', unprocessedData.revenue, 'sum', '1');
 }
 
 // function authMetrics(metrics) {
