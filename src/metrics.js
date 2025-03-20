@@ -166,8 +166,6 @@ async function sendMetricToGrafana(body) { // the function that send over the in
                     console.error(`Failed to push metrics data to Grafana: ${text}`);
                     console.error(body);
                 });
-            } else {
-                console.log(`Pushed metrics`);
             }
         })
         .catch((error) => {
@@ -184,7 +182,6 @@ function zeroOut() {
 }
 function sendMetricsPeriodically(period) { // Sets the timer in which the metrics are sent
     return setInterval(async () => {
-        console.log('Sending metrics...')
         try {
             const buf = new MetricBuilder();
             httpMetrics(buf);
