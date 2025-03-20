@@ -159,7 +159,7 @@ function zeroOut(){
     unprocessedData.http_latencies = [];
     unprocessedData.pizza_purchases = 0;
     unprocessedData.http_latencies = []
-    unprocessedData.http_req_num.get = unprocessedData.http_req_num.put = unprocessedData.http_req_num.post = unprocessedData.http_req_num.delete = unprocessedData.pizza_purchase_failures = 0;
+    unprocessedData.http_req_num.get = unprocessedData.http_req_num.put = unprocessedData.http_req_num.post = unprocessedData.http_req_num.delete = unprocessedData.pizza_purchase_failures = unprocessedData.revenue = 0;
 }
 function sendMetricsPeriodically(period) { // Sets the timer in which the metrics are sent
     return setInterval(async () => {
