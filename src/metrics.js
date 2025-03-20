@@ -79,7 +79,7 @@ const requestTracker = (req, res, next) => { // The middle ware for the requests
     };
 
     res.on('finish', handler);
-    res.on('close', handler);
+    // res.on('close', handler);
     next();
 };
 
