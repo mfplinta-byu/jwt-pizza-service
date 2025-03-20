@@ -41,6 +41,8 @@ const requestTracker = (req, res, next) => { // The middle ware for the requests
                 case 'DELETE':
                     unprocessedData.http_req_num.delete += 1;
                     break;
+                default:
+                    return;
             }
 
             // Handle purchase metrics
