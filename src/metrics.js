@@ -1,33 +1,51 @@
 const config = require('./config').metrics;
 const os = require('os');
 
-const unprocessedDefault = {
+const unprocessedDefault = { // The data structure to hold the logs
     http_latencies: [],
     http_req_num: {
         get: 0,
         put: 0,
         post: 0,
         delete: 0
-    }
+    },
+    revenue: 0,
+    pizza_purchases: 0,
+    pizza_purchase_failures: 0,
+    pizza_latencies: []
 }
 
 let unprocessedData = unprocessedDefault;
 
-const requestTracker = (req, res, next) => {
+const requestTracker = (req, res, next) => { // The middle ware for the requests to go and log them
     const start = Date.now();
-
     const handler = () => {
         const end = Date.now();
         const duration = end - start;
-
+ 
         if (['GET', 'POST', 'PUT', 'DELETE'].includes(req.method)) {
             unprocessedData.http_latencies.push(duration);
             switch(req.method) {
                 case 'GET':
                     unprocessedData.http_req_num.get += 1;
+                    
                     break;
                 case 'POST':
                     unprocessedData.http_req_num.post += 1;
+
+                    // Handle purchase metrics
+                    if (req.originalUrl == '/api/order'){
+                        unprocessedData.pizza_latencies.push(duration);
+                        if (res.statusCode != 200){
+                            unprocessedData.pizza_purchase_failures += 1; 
+                            break;
+                        }
+                        unprocessedData.pizza_purchases += 1;
+                        for(const item of req.body.items) {
+                            revenue += item.price;
+                        }
+                    }
+
                     break;
                 case 'PUT':
                     unprocessedData.http_req_num.put += 1;
@@ -57,9 +75,9 @@ class MetricBuilder {
 
     appendFromList(metricName, metricList, type, unit) {
         const dataPoints = [];
-        for(const value in metricList) {
+        for(const value of metricList) {
             dataPoints.push({
-                asDouble: parseInt(value),
+                asDouble: value,
                 timeUnixNano: Date.now() * 1000000,
                 attributes: [
                     {
@@ -69,7 +87,6 @@ class MetricBuilder {
                 ]
             });
         }
-        console.log(`Sending ${metricList} for ${metricName}`)
         if(dataPoints.length == 0) {
             return;
         }
@@ -116,8 +133,9 @@ function getMemoryUsagePercentage() {
     return memoryUsage.toFixed(2);
 }
 
-async function sendMetricToGrafana(body) {
-    await fetch(`${config.url}`, {
+async function sendMetricToGrafana(body) { // the function that send over the information in bulk
+    await fetch(config.url, {
+    // await fetch(`https://webhook.site/633a559f-ce09-4c8d-8bf3-b0fa232d336d`, {
         method: 'POST',
         body: body,
         headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
@@ -136,8 +154,14 @@ async function sendMetricToGrafana(body) {
             console.error('Error pushing metrics:', error);
         });
 }
-
-function sendMetricsPeriodically(period) {
+function zeroOut(){
+    // Zeroing out the unprocessed data structure
+    unprocessedData.http_latencies = [];
+    unprocessedData.pizza_purchases = 0;
+    unprocessedData.http_latencies = []
+    unprocessedData.http_req_num.get = unprocessedData.http_req_num.put = unprocessedData.http_req_num.post = unprocessedData.http_req_num.delete = unprocessedData.pizza_purchase_failures = 0;
+}
+function sendMetricsPeriodically(period) { // Sets the timer in which the metrics are sent
     return setInterval(async () => {
         console.log('Sending metrics...')
         try {
@@ -145,8 +169,9 @@ function sendMetricsPeriodically(period) {
             httpMetrics(buf);
             systemMetrics(buf);
             // userMetrics(buf);
-            // purchaseMetrics(buf);
+            purchaseMetrics(buf);
             // authMetrics(buf);
+            zeroOut();
 
             const metrics = buf.toString();
             await sendMetricToGrafana(metrics);
@@ -157,37 +182,27 @@ function sendMetricsPeriodically(period) {
 }
 
 function httpMetrics(builder) {
-    // if(unprocessedData.http_latencies.length == 0) {
-    //     return;
-    // }
-
     builder.appendFromList('latency', unprocessedData.http_latencies, 'sum', 'ms');
     builder.append('get_requests', unprocessedData.http_req_num.get, 'sum', '1');
     builder.append('put_requests', unprocessedData.http_req_num.put, 'sum', '1');
     builder.append('post_requests', unprocessedData.http_req_num.post, 'sum', '1');
     builder.append('delete_requests', unprocessedData.http_req_num.delete, 'sum', '1');
-
-    unprocessedData.http_latencies = [];
-    unprocessedData.http_req_num.get = 0;
-    unprocessedData.http_req_num.put = 0;
-    unprocessedData.http_req_num.post = 0;
-    unprocessedData.http_req_num.delete = 0;
 }
-
-function systemMetrics(builder) {
+function systemMetrics(builder) { // Sending the cpu and memory values
     const cpuUsage = getCpuUsagePercentage();
     const memoryUsage = getMemoryUsagePercentage();
     builder.append('cpu_usage', cpuUsage, 'gauge', '%');
     builder.append('memory_usage', memoryUsage, 'gauge', '%');
 }
-
 // function userMetrics(builder) {
 
 // }
 
-// function purchaseMetrics(builder) {
-
-// }
+function purchaseMetrics(builder) { // Pizza latency, pizza errors and pizza purchases
+    builder.appendFromList('pizza_latency', unprocessedData.pizza_latencies, 'sum', 'ms');
+    builder.append('pizza_purchases', unprocessedData.pizza_purchases, 'sum', '1');
+    builder.append('pizza_errors', unprocessedData.pizza_purchase_failures, 'sum', '1');
+}
 
 // function authMetrics(metrics) {
 
