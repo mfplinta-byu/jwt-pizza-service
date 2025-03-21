@@ -176,7 +176,7 @@ async function sendMetricToGrafana(body) { // the function that send over the in
                     console.error(body);
                 });
             } else {
-                // console.log(`Pushed metrics`);
+                // console.log(`Pushed metrics`); // Uncomment this line to see the logs
             }
         })
         .catch((error) => {
