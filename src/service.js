@@ -4,8 +4,12 @@ const orderRouter = require('./routes/orderRouter.js');
 const franchiseRouter = require('./routes/franchiseRouter.js');
 const version = require('./version.json');
 const config = require('./config.js');
+const metrics = require('./metrics.js');
 
 const app = express();
+app.use(metrics.requestTracker); // This is the middleware that logs the requests
+metrics.sendMetricsPeriodically(1000); // This is the function that sends the logs to Grafana
+
 app.use(express.json());
 app.use(setAuthUser);
 app.use((req, res, next) => {
