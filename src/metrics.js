@@ -147,12 +147,6 @@ function getCpuUsagePercentage() {
     // console.log("CPU Usage: " + cpuUsage.toFixed(2));
     return cpuUsage.toFixed(2); // *100 if it doesn't work in prod
 }
-// function getCpuUsagePercentage() {
-//     const cpuUsage = os.loadavg()[0] / os.cpus().length;
-//     const cpuUsagePercentage = parseFloat((cpuUsage * 100).toFixed(2));
-//     console.log("CPU Usage: " + cpuUsagePercentage);
-//     return cpuUsagePercentage;
-//   }
 
 function getMemoryUsagePercentage() {
     const totalMemory = os.totalmem();

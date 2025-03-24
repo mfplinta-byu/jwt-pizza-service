@@ -5,11 +5,13 @@ const franchiseRouter = require('./routes/franchiseRouter.js');
 const version = require('./version.json');
 const config = require('./config.js');
 const metrics = require('./metrics.js');
+const logging = require('./logging.js');
+// logging.sendLogs(); // This is the function that sends the logs to Grafana
 
 const app = express();
 app.use(metrics.requestTracker); // This is the middleware that logs the requests
-metrics.sendMetricsPeriodically(1000); // This is the function that sends the logs to Grafana
-
+metrics.sendMetricsPeriodically(1000); // This is the function that sends the metrics to Grafana
+app.use(logging.httpLogger); // This is the middleware that logs the requests
 app.use(express.json());
 app.use(setAuthUser);
 app.use((req, res, next) => {
