@@ -158,7 +158,7 @@ async function sendMetricToGrafana(body) { // the function that send over the in
     await fetch(config.url, {
         method: 'POST',
         body: body,
-        headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${config.userId}:${config.apiKey}`, 'Content-Type': 'application/json' },
     })
         .then((response) => {
             if (!response.ok) {

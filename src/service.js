@@ -5,11 +5,13 @@ const franchiseRouter = require('./routes/franchiseRouter.js');
 const version = require('./version.json');
 const config = require('./config.js');
 const metrics = require('./metrics.js')
+const logger = require('./logger.js');
 
 metrics.sendMetricsPeriodically(1000);
 
 const app = express();
 app.use(metrics.requestTracker)
+app.use(logger.httpLogger);
 app.use(express.json());
 app.use(setAuthUser);
 app.use((req, res, next) => {
