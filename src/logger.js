@@ -1,4 +1,4 @@
-const config = require('./config.json').logging;
+const config = require('./config').logging;
 
 class Logger {
   httpLogger = (req, res, next) => {
