@@ -5,11 +5,13 @@ const franchiseRouter = require('./routes/franchiseRouter.js');
 const version = require('./version.json');
 const config = require('./config.js');
 const metrics = require('./metrics.js')
-const logger = require('./logger.js');
+const Logger = require('pizza-logger')
 
 metrics.sendMetricsPeriodically(1000);
 
 const app = express();
+const logger = new Logger(config);
+
 app.use(metrics.requestTracker)
 app.use(logger.httpLogger);
 app.use(express.json());
