@@ -75,10 +75,15 @@ orderRouter.get(
 );
 
 // createOrder
+let enableChaos = false;
 orderRouter.post(
   '/',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    if (enableChaos && Math.random() < 0.5) {
+      throw new StatusCodeError('Chaos monkey', 500);
+    }
+    next();
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
     const orderInfo = { diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order };
@@ -98,7 +103,6 @@ orderRouter.post(
 );
 
 // chaos
-let enableChaos = false;
 orderRouter.put(
   '/chaos/:state',
   authRouter.authenticateToken,
@@ -110,12 +114,5 @@ orderRouter.put(
     res.json({ chaos: enableChaos });
   })
 );
-
-orderRouter.post('/', (req, res, next) => {
-  if (enableChaos && Math.random() < 0.5) {
-    throw new StatusCodeError('Chaos monkey', 500);
-  }
-  next();
-});
 
 module.exports = orderRouter;
