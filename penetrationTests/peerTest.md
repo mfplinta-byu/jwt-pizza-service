@@ -1,29 +1,6 @@
 # Peer Pen Test - Josh Wiseman, Matheus Plinta
 
 # Self attack
-## Josh Wiseman
-- After searching through my own source, I was able to identity two main weaknesses.
-
-|  Item           | Result                                                                 |
-|----------------|------------------------------------------------------------------------|
-| Date           | April 12, 2025                                                          |
-| Target         | pizza.joshwiseman.click                                               |
-| Classification | SQL Injection                                                              |
-| Severity       | 3                                                                      |
-| Description    | SQL injection, was able to change someone else information without proper admin authentication.         |
-| Corrections    | Sanitized the inputs to the update user API                                                 |
-
-|  Item           | Result                                                                 |
-|----------------|------------------------------------------------------------------------|
-| Date           | April 11, 2025                                                          |
-| Target         | pizza.joshwiseman.click                                               |
-| Classification | Known Security Issue                                                              |
-| Severity       | 2                                                                      |
-| Description    | By using known generics from the script one could log into the a@jwt.com admin         |
-| Corrections    | Changed script to prevent known / generic default admin, and changed the current admin       |
-
-
-
 
 ## Matheus Plinta
 - After reviewing my source code, I found two exploitable vulnerabilities.
@@ -47,6 +24,28 @@
 | Description    | Database initialization function creates a known default admin user that can be exploited. |
 | Images         | [Security issue vulnerability image](2.jpeg) |
 | Corrections    | Ensured to run init.js to create a different user other than the default one in the GitHub Actions pipeline. |
+
+
+## Josh Wiseman
+- After searching through my own source, I was able to identity two main weaknesses.
+
+|  Item           | Result                                                                 |
+|----------------|------------------------------------------------------------------------|
+| Date           | April 12, 2025                                                          |
+| Target         | pizza.joshwiseman.click                                               |
+| Classification | SQL Injection                                                              |
+| Severity       | 3                                                                      |
+| Description    | SQL injection, was able to change someone else information without proper admin authentication.         |
+| Corrections    | Sanitized the inputs to the update user API                                                 |
+
+|  Item           | Result                                                                 |
+|----------------|------------------------------------------------------------------------|
+| Date           | April 11, 2025                                                          |
+| Target         | pizza.joshwiseman.click                                               |
+| Classification | Known Security Issue                                                              |
+| Severity       | 2                                                                      |
+| Description    | By using known generics from the script one could log into the a@jwt.com admin         |
+| Corrections    | Changed script to prevent known / generic default admin, and changed the current admin       |
 
 
 # Peer attack records
