@@ -35,7 +35,7 @@
 | Classification | SQL Injection                                                             |
 | Severity       | 3                                                                      |
 | Description    | SQL injection in the updateUser endpoint, able to arbitrarily change information in the user table. |
-| Images         | [SQL Injection vulnerability image](1.jpeg) |
+| Images         | ![SQL Injection vulnerability image](1.jpeg) |
 | Corrections    | Change query to use parameters instead of directly passing the arguments in the query string. |
 
 |  Item           | Result                                                                 |
@@ -45,7 +45,7 @@
 | Classification | Known Security Issue                                                          |
 | Severity       | 2                                                                      |
 | Description    | Database initialization function creates a known default admin user that can be exploited. |
-| Images         | [Security issue vulnerability image](2.jpeg) |
+| Images         | ![Security issue vulnerability image](2.jpeg) |
 | Corrections    | Ensured to run init.js to create a different user other than the default one in the GitHub Actions pipeline. |
 
 
@@ -77,7 +77,7 @@
 | Classification | SQL Injection                                                              |
 | Severity       | 3                                                                      |
 | Description    | SQL injection, was able to change Josh's admin user to have an attacker-chosen password. [Script](penetrationScript.py)         |
-| Images         | [SQL injection attack image](4.jpeg) |
+| Images         | ![SQL injection attack image](4.jpeg) |
 | Corrections    | Josh implemented SQL sanitization by using parameters in the query, stopping me in my tracks.  |
 
 |  Item           | Result                                                                 |
@@ -87,7 +87,7 @@
 | Classification | Known Security Issue                                                              |
 | Severity       | 2                                                                      |
 | Description    | Logged in using the default user a@jwt.com with its default password from the class instructions. [Script](penetrationScript.py) |
-| Images         | [Default credentials attack image](3.jpeg) |
+| Images         | ![Default credentials attack image](3.jpeg) |
 | Corrections    | Changed the default user in the initialization script to use different credentials. |
 
 
